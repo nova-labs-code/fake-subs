@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Subscriber Simulator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  button {
+    padding: 14px 28px;
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  #stats {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>YouTube New Subscriber Simulator</h1>
+<p>Rate: 5 notifications per second</p>
+
+<button id="start">START</button>
+<button id="stop">STOP</button>
+
+<div id="stats">Total Subscribers: 0</div>
+
+<script>
+let intervalId = null;
+
+// YouTube icon
+const YOUTUBE_ICON = "https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png";
+
+// Load saved count or start at 0
+let subscriberCount = parseInt(localStorage.getItem('subscriberCount')) || 0;
+document.getElementById('stats').textContent = `Total Subscribers: ${subscriberCount}`;
+
+// Request permission
+async function ensurePermission() {
+  if (!("Notification" in window)) {
+    alert("Notifications not supported.");
+    return false;
+  }
+  if (Notification.permission === "default") {
+    const perm = await Notification.requestPermission();
+    return perm === "granted";
+  }
+  return Notification.permission === "granted";
+}
+
+// Send a new subscriber notification
+function sendNotification() {
+  subscriberCount++;
+  localStorage.setItem('subscriberCount', subscriberCount);
+
+  new Notification(`🔔 New Subscriber!`, {
+    body: `You got a new subscriber! Total: ${subscriberCount}`,
+    icon: YOUTUBE_ICON
+  });
+
+  document.getElementById('stats').textContent =
+    `Total Subscribers: ${subscriberCount}`;
+}
+
+// Start / Stop buttons
+document.getElementById('start').onclick = async () => {
+  const ok = await ensurePermission();
+  if (!ok) return alert("Permission denied");
+
+  if (intervalId) return;
+
+  // 5 per second → every 200ms
+  intervalId = setInterval(sendNotification, 200);
+};
+
+document.getElementById('stop').onclick = () => {
+  clearInterval(intervalId);
+  intervalId = null;
+};
+</script>
+
+</body>
+</html>

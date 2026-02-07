@@ -3,73 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YouTube Subscriber Simulator</title>
-
-<!-- Favicon (site icon) -->
-<link rel="icon" href="https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png" type="image/png">
-
+<title>Popular Gamer YouTube Notifications</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  button { padding: 14px 28px; font-size: 18px; margin-right: 10px; cursor: pointer; }
-  #stats { margin-top: 15px; font-size: 18px; font-weight: bold; }
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  button {
+    padding: 14px 28px;
+    font-size: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  #stats {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
 
-<h1>YouTube New Subscriber Simulator</h1>
-<p>Rate: 5 notifications per second</p>
+<h1>Popular Gamer & Challenge YouTube Notifications</h1>
+<p>Rate: 3 notifications per second</p>
 
 <button id="start">START</button>
 <button id="stop">STOP</button>
 
-<div id="stats">Total Subscribers: 0</div>
+<div id="stats">Sent: 0</div>
 
 <script>
 let intervalId = null;
+let sentCount = 0;
 
-// YouTube logo for notifications
-const YOUTUBE_ICON = "https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png";
+// Very well-known active gaming + challenge YouTubers
+const youtubers = [
+  "MrBeast", "PewDiePie", "Markiplier", "Jacksepticeye",
+  "Dream", "TechnobladeFanServer", "TommyInnit", "LazarBeam",
+  "Valkyrae", "Pokimane", "Corpse Husband", "Ninja",
+  "Logan Paul", "KSI", "DanTDM", "SSSniperWolf",
+  "Morgz", "FGTeeV", "PrestonPlayz", "UnspeakableGaming",
+  "FaZe Rug", "Airrack", "Yes Theory", "Daily Dose of Internet",
+  "MrBeast Gaming", "Dude Perfect", "How Ridiculous", 
+  "Brandon Bowen", "Kurzgesagt", "Veritasium",
+  "Linus Tech Tips", "iJustine", "Unbox Therapy", 
+  "Nick DiGiovanni", "Ryan Trahan", "Brandon Rogers",
+  "TheOdd1sOut", "Jaiden Animations", "Lilly Singh",
+  "Mark Rober", "Kurzgesagt Clips", "FunForLouis",
+  "DanTDM Shorts", "MrBeast Shorts", "Airrack Clips",
+  "Zach King", "Jubilee", "Technoblade Tribute Fan",
+  "Emma Chamberlain", "Dream SMP Highlights", "Pokimane Clips",
+  "Valkyrae Shorts", "FaZe Clan Highlights", "Yes Theory Clips",
+  "Dude Perfect Clips", "FGTeeV Clips", "UnspeakableGaming Shorts",
+  "How Ridiculous Shorts", "Brandon Bowen Shorts"
+];
 
-// Load saved subscriber count
-let subscriberCount = parseInt(localStorage.getItem('subscriberCount')) || 0;
-document.getElementById('stats').textContent = `Total Subscribers: ${subscriberCount}`;
+// YouTube icon
+const YOUTUBE_ICON =
+  "https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png";
 
-// iOS-friendly: requestPermission inside click handler
-function requestPermissionAndStart() {
+async function ensurePermission() {
   if (!("Notification" in window)) {
     alert("Notifications not supported.");
-    return;
+    return false;
   }
-
-  Notification.requestPermission().then(permission => {
-    if (permission !== "granted") {
-      alert("Notifications blocked! Enable notifications in Safari settings.");
-      return;
-    }
-
-    if (intervalId) return;
-
-    // 5 notifications per second → every 200ms
-    intervalId = setInterval(sendNotification, 200);
-  });
+  if (Notification.permission === "default") {
+    const perm = await Notification.requestPermission();
+    return perm === "granted";
+  }
+  return Notification.permission === "granted";
 }
 
-// Send a new subscriber notification
 function sendNotification() {
-  subscriberCount++;
-  localStorage.setItem('subscriberCount', subscriberCount);
+  sentCount++;
 
-  new Notification("🔔 New Subscriber!", {
-    body: `You got a new subscriber! Total: ${subscriberCount}`,
+  const creator =
+    youtubers[Math.floor(Math.random() * youtubers.length)];
+
+  new Notification(`🔔 Notification #${sentCount}`, {
+    body: `${creator} uploaded a new video!`,
     icon: YOUTUBE_ICON
   });
 
-  document.getElementById('stats').textContent = `Total Subscribers: ${subscriberCount}`;
+  document.getElementById("stats").textContent =
+    `Sent: ${sentCount}`;
 }
 
-// Start / Stop buttons
-document.getElementById('start').onclick = requestPermissionAndStart;
-document.getElementById('stop').onclick = () => {
+document.getElementById("start").onclick = async () => {
+  const ok = await ensurePermission();
+  if (!ok) return alert("Permission denied");
+
+  if (intervalId) return;
+
+  // 3 per second → every 333ms
+  intervalId = setInterval(sendNotification, 333);
+};
+
+document.getElementById("stop").onclick = () => {
   clearInterval(intervalId);
   intervalId = null;
 };

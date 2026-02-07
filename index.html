@@ -4,22 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YouTube Subscriber Simulator</title>
+
+<!-- Favicon (site icon) -->
+<link rel="icon" href="https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png" type="image/png">
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-  }
-  button {
-    padding: 14px 28px;
-    font-size: 18px;
-    margin-right: 10px;
-    cursor: pointer;
-  }
-  #stats {
-    margin-top: 15px;
-    font-size: 18px;
-    font-weight: bold;
-  }
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  button { padding: 14px 28px; font-size: 18px; margin-right: 10px; cursor: pointer; }
+  #stats { margin-top: 15px; font-size: 18px; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -35,24 +27,31 @@
 <script>
 let intervalId = null;
 
-// YouTube icon
+// YouTube logo for notifications
 const YOUTUBE_ICON = "https://www.youtube.com/s/desktop/fe2e5c60/img/favicon_144x144.png";
 
-// Load saved count or start at 0
+// Load saved subscriber count
 let subscriberCount = parseInt(localStorage.getItem('subscriberCount')) || 0;
 document.getElementById('stats').textContent = `Total Subscribers: ${subscriberCount}`;
 
-// Request permission
-async function ensurePermission() {
+// iOS-friendly: requestPermission inside click handler
+function requestPermissionAndStart() {
   if (!("Notification" in window)) {
     alert("Notifications not supported.");
-    return false;
+    return;
   }
-  if (Notification.permission === "default") {
-    const perm = await Notification.requestPermission();
-    return perm === "granted";
-  }
-  return Notification.permission === "granted";
+
+  Notification.requestPermission().then(permission => {
+    if (permission !== "granted") {
+      alert("Notifications blocked! Enable notifications in Safari settings.");
+      return;
+    }
+
+    if (intervalId) return;
+
+    // 5 notifications per second → every 200ms
+    intervalId = setInterval(sendNotification, 200);
+  });
 }
 
 // Send a new subscriber notification
@@ -60,26 +59,16 @@ function sendNotification() {
   subscriberCount++;
   localStorage.setItem('subscriberCount', subscriberCount);
 
-  new Notification(`🔔 New Subscriber!`, {
+  new Notification("🔔 New Subscriber!", {
     body: `You got a new subscriber! Total: ${subscriberCount}`,
     icon: YOUTUBE_ICON
   });
 
-  document.getElementById('stats').textContent =
-    `Total Subscribers: ${subscriberCount}`;
+  document.getElementById('stats').textContent = `Total Subscribers: ${subscriberCount}`;
 }
 
 // Start / Stop buttons
-document.getElementById('start').onclick = async () => {
-  const ok = await ensurePermission();
-  if (!ok) return alert("Permission denied");
-
-  if (intervalId) return;
-
-  // 5 per second → every 200ms
-  intervalId = setInterval(sendNotification, 200);
-};
-
+document.getElementById('start').onclick = requestPermissionAndStart;
 document.getElementById('stop').onclick = () => {
   clearInterval(intervalId);
   intervalId = null;
